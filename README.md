@@ -46,10 +46,10 @@ DKaffeine 챗봇은 산재된 사내 기술 문서, HR 정책, 고객 응대 매
 - **Task Queue**: Celery + Redis
 
 ### 시스템 구성도
-![논리 아키텍처](assets/논리 아키텍처.png)
-![시스템 아키텍처](assets/시스템 아키텍처.png)
-![AI 아키텍처](assets/AI 아키텍처.png)
-![AI 서비스 워크플로우](assets/AI 서비스 워크플로우.png)
+![논리 아키텍처](assets/논리%20아키텍처.png)
+![시스템 아키텍처](assets/시스템%20아키텍처.png)
+![AI 아키텍처](assets/AI%20아키텍처.png)
+![AI 서비스 워크플로우](assets/AI%20서비스%20워크플로우.png)
 
 ---
 
@@ -63,17 +63,17 @@ DKaffeine 챗봇은 산재된 사내 기술 문서, HR 정책, 고객 응대 매
 
 ### 📸 주요 기능 스크린샷 갤러리
 
-![관리자 설정](assets/관리자 설정.png)
-![사용자 관리](assets/사용자 관리.png)
-![데이터 관리](assets/데이터 관리.png)
-![FAQ 관리](assets/FAQ 관리.png)
-![분석 대시보드](assets/분석 대시보드.png)
+![관리자 설정](assets/관리자%20설정.png)
+![사용자 관리](assets/사용자%20관리.png)
+![데이터 관리](assets/데이터%20관리.png)
+![FAQ 관리](assets/FAQ%20관리.png)
+![분석 대시보드](assets/분석%20대시보드.png)
 
 ### 🤖 챗봇 사용 예시 및 가드레일
 
-![디카페인 사용 예시](assets/디카페인 사용 예시.png)
-![가드레일 예시 1](assets/가드레일 예시1.png)
-![가드레일 예시 2](assets/가드레일 예시 2.png)
+![디카페인 사용 예시](assets/디카페인%20사용%20예시.png)
+![가드레일 예시 1](assets/가드레일%20예시1.png)
+![가드레일 예시 2](assets/가드레일%20예시%202.png)
 
 ---
 
