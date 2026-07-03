@@ -1,0 +1,186 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: jenkins-kaniko
+spec:
+  nodeSelector:
+    dedicated: jenkins
+
+  tolerations:
+    - key: "jenkins"
+      operator: "Equal"
+      value: "only"
+      effect: "NoSchedule"
+      
+  containers:
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:debug
+      command:
+        - cat
+      tty: true
+
+      volumeMounts:
+        - name: kcr-docker-config
+          mountPath: /kaniko/.docker
+
+  volumes:
+    - name: kcr-docker-config
+      secret:
+        secretName: kcr-regcred
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+'''
+            defaultContainer 'jnlp'
+        }
+    }
+
+    environment {
+        REGISTRY_HOST      = 'pbl07-03.kr-central-2.kcr.dev'
+        REGISTRY_NAMESPACE = 'dkaffeine'
+        SERVICE_NAME       = 'dkaffeine-ai-chatbot'
+
+        GITHUB_CREDENTIAL  = 'your-github-credential-id'
+        INFRA_REPO         = 'https://github.com/dktechin-pbl/DKaffeine-Infra.git'
+
+        TARGET_BRANCH      = 'main'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "📦 Checking out source code..."
+                checkout scm
+            }
+        }
+
+        stage('Check Branch & Changes') {
+            steps {
+                script {
+                    // 1) 현재 브랜치 이름 가져오기
+                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH
+
+                    if (!branch) {
+                        branch = sh(
+                                script: 'git rev-parse --abbrev-ref HEAD',
+                                returnStdout: true
+                        ).trim()
+                    }
+
+                    echo "현재 Git 브랜치(raw): ${branch}"
+
+                    // origin/main 같은 형태면 origin/ 제거
+                    branch = branch.replaceAll(/^origin\\//, '')
+                    echo "정규화된 브랜치 이름: ${branch}"
+
+                    // 2) main이 아니면 바로 종료
+                    if (branch != env.TARGET_BRANCH) {
+                        echo "➡️ ${env.TARGET_BRANCH} 브랜치가 아니라서 CI 스킵합니다."
+                        currentBuild.result = 'NOT_BUILT'
+                        error('SKIP: NOT_TARGET_BRANCH')
+                    }
+
+                    // 3) main인데, 이전 빌드 이후 변경사항이 있는지 확인
+                    def hasChanges = false
+                    for (cs in currentBuild.changeSets) {
+                        if (!cs.isEmptySet()) {
+                            hasChanges = true
+                            break
+                        }
+                    }
+
+                    if (!hasChanges) {
+                        echo "☑ ${env.TARGET_BRANCH} 브랜치에 이전 빌드 이후 변경사항이 없어서 Kaniko/Helm 단계는 스킵합니다."
+                        currentBuild.result = 'NOT_BUILT'
+                        error('SKIP: NO_CHANGES')
+                    }
+
+                    echo "✅ ${env.TARGET_BRANCH} 브랜치이고 변경사항도 있으므로 전체 파이프라인 실행"
+                }
+            }
+        }
+
+        stage('Docker Build & Push (Kaniko)') {
+            steps {
+                echo "🐳 Building & Pushing Docker image with Kaniko..."
+
+                container('kaniko') {
+                    sh '''
+                    set -e
+
+                    IMAGE_BASE=${REGISTRY_HOST}/${REGISTRY_NAMESPACE}/${SERVICE_NAME}
+
+                    echo "IMAGE_BASE: ${IMAGE_BASE}"
+                    echo "WORKSPACE : ${WORKSPACE}"
+
+                    /kaniko/executor \
+                      --context=${WORKSPACE} \
+                      --dockerfile=${WORKSPACE}/Dockerfile \
+                      --destination=${IMAGE_BASE}:${BUILD_NUMBER} \
+                      --destination=${IMAGE_BASE}:latest \
+                      --cache=false
+                    '''
+                }
+            }
+            post {
+                success { echo "✅ [Kaniko] Image build & push success" }
+                failure { echo "❌ [Kaniko] Image build & push failed" }
+            }
+        }
+
+        stage('Update Helm values.yaml') {
+            steps {
+                echo "🧭 Updating Helm values.yaml in infra repo..."
+
+                dir('infra') {
+                    git branch: 'main', credentialsId: GITHUB_CREDENTIAL, url: INFRA_REPO
+
+                    sh '''
+                    git config user.email "ci@jenkins.local"
+                    git config user.name "jenkins-ci"
+                    '''
+
+                    withCredentials([usernamePassword(
+                            credentialsId: GITHUB_CREDENTIAL,
+                            usernameVariable: 'GIT_USER',
+                            passwordVariable: 'GIT_TOKEN'
+                    )]) {
+                        sh '''
+                        set -e
+
+                        TARGET_FILE=k8s/chatbot/helm/values.yaml
+
+                        if [ -f "$TARGET_FILE" ]; then
+                            echo "🔧 Updating tag in $TARGET_FILE ..."
+
+                            sed -i "s/tag: .*/tag: \\"${BUILD_NUMBER}\\"/" "$TARGET_FILE"
+
+                            git add "$TARGET_FILE"
+                            git commit -m "[CI] Update dkaffeine-ai-chatbot image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
+
+                            git remote set-url origin https://$GIT_USER:$GIT_TOKEN@github.com/dktechin-pbl/DKaffeine-Infra.git
+
+                            git push origin main
+                        else
+                            echo "⚠️ values.yaml not found! Skipping..."
+                        fi
+                        '''
+                    }
+                }
+            }
+            post {
+                success { echo "✅ [Helm Update] values.yaml updated in infra repo!" }
+                failure { echo "❌ [Helm Update] Failed to update infra repo!" }
+            }
+        }
+    }
+    post {
+        success { echo "🎉 CI pipeline completed successfully for ${SERVICE_NAME}!" }
+        failure { echo "🚨 CI pipeline failed for ${SERVICE_NAME}. Check logs above for details." }
+    }
+}

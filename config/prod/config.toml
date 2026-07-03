@@ -1,0 +1,155 @@
+[app]
+# 애플리케이션 설정
+name = "dkaf-chatbot-api"
+environment = "production"  # production, development, test
+allow_client_history = false  # 개발/테스트 환경에서만 클라이언트 제공 chat_history 허용
+# 백엔드 서비스 URL (FAQ 알림 발송용)
+# 전체 API 경로까지 포함하여 설정
+# 실제 백엔드 API: POST /api/notifications/faq-pending/{faqId}
+# 예: https://backend.dkaffeine.com/api/notifications/faq-pending
+backend_url = "https://backend.dkaffeine.com/api/notifications/faq-pending"
+
+[postgres]
+# PostgreSQL 데이터베이스 설정
+# password와 database_url은 .secrets.toml로 이동
+host = "postgresql.postgres.svc.cluster.local"  # 예: "postgres-svc.postgres.svc.cluster.local" 또는 "localhost"
+port = 5432
+user = "postgres"
+db = "dkaffeine_db"
+pool_size = 10
+max_overflow = 20
+pool_recycle = 3600
+sql_echo = false
+[redis]
+# Redis 설정
+use_redis = true
+host = "redis-master.redis.svc.cluster.local"  # 예: "redis-svc.redis.svc.cluster.local" 또는 "localhost"
+port = 6379
+db = 0
+max_connections = 50
+[celery]
+# Celery 백그라운드 작업 설정
+broker_url = "redis://redis-master.redis.svc.cluster.local:6379/0"  # Redis 브로커 URL (환경변수 REDIS_URL로 오버라이드 가능)
+result_backend = "redis://redis-master.redis.svc.cluster.local:6379/0"  # 결과 저장소
+task_serializer = "json"
+result_serializer = "json"
+accept_content = ["json"]
+timezone = "Asia/Seoul"
+enable_utc = true
+# Worker 설정
+worker_concurrency = 4  # 동시 처리 작업 수
+worker_prefetch_multiplier = 4  # Worker가 미리 가져올 작업 수
+worker_max_tasks_per_child = 1000  # 메모리 누수 방지를 위한 재시작 주기
+# Task 설정
+task_time_limit = 300  # 5분 타임아웃 (초)
+task_soft_time_limit = 240  # 4분 소프트 타임아웃 (초)
+task_acks_late = true  # 작업 완료 후 ACK (재시작 시 재실행 보장)
+task_reject_on_worker_lost = true  # Worker 종료 시 작업 거부
+# 재시도 설정
+task_default_max_retries = 3  # 기본 최대 재시도 횟수
+task_default_retry_delay = 60  # 기본 재시도 지연 (초)
+
+
+[session]
+# 세션 관리 설정
+ttl = 3600  # 1시간 (초)
+
+[question_log]
+# 질문 로그 설정
+ttl = 604800  # 7일 (초)
+
+[bedrock]
+# AWS Bedrock 리전 및 설정
+region = "ap-northeast-1"
+# AWS Bedrock Knowledge Base ID
+knowledge_base_id = "your-knowledge-base-id"
+# Data Source ID (S3 데이터 소스)
+# Knowledge Base에 연결된 데이터 소스 ID입니다
+# StartIngestionJob 호출 시 필수입니다
+data_source_id = "your-data-source-id"
+# Inference Profile ID (ap-northeast-1 리전에서는 모든 모델에 필요)
+# Haiku 4.5용 (일상 대화)
+inference_profile_id_haiku = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+# Sonnet 4.5용 (비즈니스/RAG)
+inference_profile_id_sonnet = "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
+# 하위 호환성을 위한 기본값 (Haiku용)
+inference_profile_id = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+# Reranker 설정
+reranker_type = "bedrock"  # cross_encoder 또는 bedrock
+# cross_encoder: sentence-transformers 기반 (0.8~0.95 범위의 높은 점수, 권장)
+# bedrock: AWS Bedrock Rerank API (0.0~1.0 범위이지만 매우 작은 값 반환 가능)
+reranker_model_id = "cohere.rerank-v3-5:0"
+# access_key_id, secret_access_key는 .secrets.toml로 이동
+
+[aws_s3]
+# AWS S3 설정 (Bedrock KB 데이터 소스용)
+# bucket과 region은 config.toml에 유지 (민감하지 않음)
+bucket = "your-bucket-name"
+region = "ap-northeast-1"
+# access_key_id, secret_access_key는 .secrets.toml로 이동
+
+[llm]
+# LLM Provider 설정
+provider = "bedrock"  # bedrock
+embeddings_provider = "bedrock"  # bedrock
+casual_model = "anthropic.claude-haiku-4-5-20251001-v1:0"
+business_model = "anthropic.claude-haiku-4-5-20251001-v1:0"
+circuit_breaker_threshold = 5
+circuit_breaker_timeout = 60.0
+
+[bedrock_circuit_breaker]
+# Bedrock Circuit Breaker 설정
+threshold = 5
+timeout = 60.0
+max_retries = 3
+retry_initial_delay = 1.0
+retry_max_delay = 60.0
+
+[guardrail]
+# Guardrail 설정
+llm_circuit_breaker_threshold = 5
+llm_circuit_breaker_timeout = 60.0
+
+[cache]
+# Cache 설정
+kb_version = "v1.0"
+semantic_similarity_threshold = 0.95
+semantic_max_search = 50
+semantic_early_exit = 0.98
+
+[faq]
+# FAQ 설정
+provider = "hybrid"  # hybrid, postgresql, redis
+embedding_cache_size = 1000
+embedding_cache_ttl = 3600  # 1시간
+default_company_id = "default"
+warmup_limit = 1000
+# FAQ 빈도 기반 자동 생성 설정
+generation_days_back = 30  # 며칠 전까지의 질문 로그 조회
+generation_min_frequency = 20  # 최소 빈도 (이상이면 FAQ 생성)
+generation_min_confidence = 0.85  # RAG 최소 신뢰도
+cluster_similarity_threshold = 0.8  # 클러스터링 유사도 임계값 (0.0~1.0)
+
+[retriever]
+# Retriever 설정
+provider = "bedrock_kb"  # faiss | bedrock_kb
+
+[rag]
+# RAG 설정
+rag_confidence_threshold = 0.8  # RAG 신뢰도 임계값 (0.0~1.0, 이 값 미만이면 답변 생성 안 함)
+
+[langsmith]
+# LangSmith 모니터링 설정 (선택적)
+tracing_v2 = true
+project = "your-langsmith-project-name"
+# api_key는 .secrets.toml로 이동
+
+[openai]
+# OpenAI API 설정 (선택적, 현재 미사용)
+# api_key는 .secrets.toml로 이동
+
+[kakao_object_storage]
+# 카카오 클라우드 Object Storage 설정
+# 이 설정은 향후 사용 예정 (현재 미사용)
+# kakao_access_key_id, kakao_secret_access_key는 .secrets.toml로 이동
+

@@ -1,0 +1,83 @@
+# 환경변수 export 설정 예시
+# 이 파일은 Kubernetes ConfigMap이나 환경변수 설정을 위한 참고용입니다.
+# 실제 배포 시에는 Kubernetes Secret이나 환경변수로 관리하세요.
+
+# PostgreSQL 설정
+# export POSTGRES_HOST="your-postgres-host"
+# export POSTGRES_PORT="5432"
+# export POSTGRES_USER="your-postgres-user"
+# export POSTGRES_DB="your-database-name"
+# export POSTGRES_PASSWORD="your-password"
+# export POSTGRES_DATABASE_URL="postgresql+psycopg://user:password@host:port/dbname"
+
+# Redis 설정
+# export REDIS_HOST="your-redis-host"
+# export REDIS_PORT="6379"
+# export REDIS_DB="0"
+# export REDIS_USE_REDIS="true"
+
+# AWS Bedrock 설정
+# export BEDROCK_REGION="ap-northeast-1"
+# export BEDROCK_KNOWLEDGE_BASE_ID="your-knowledge-base-id"
+# export BEDROCK_DATA_SOURCE_ID="your-data-source-id"
+# export BEDROCK_ACCESS_KEY_ID="your-bedrock-access-key-id"
+# export BEDROCK_SECRET_ACCESS_KEY="your-bedrock-secret-access-key"
+# export BEDROCK_INFERENCE_PROFILE_ID="your-inference-profile-id"
+# export BEDROCK_INFERENCE_PROFILE_ID_HAIKU="your-inference-profile-id-haiku"
+# export BEDROCK_INFERENCE_PROFILE_ID_SONNET="your-inference-profile-id-sonnet"
+# export BEDROCK_RERANKER_TYPE="bedrock"  # bedrock | cross_encoder
+# export BEDROCK_RERANKER_MODEL_ID="cohere.rerank-v3-5:0"  # 또는 amazon.rerank-v1:0
+
+# Bedrock Circuit Breaker 설정
+# export BEDROCK_CIRCUIT_BREAKER_THRESHOLD="5"
+# export BEDROCK_CIRCUIT_BREAKER_TIMEOUT="60.0"
+# export BEDROCK_MAX_RETRIES="3"
+# export BEDROCK_RETRY_INITIAL_DELAY="1.0"
+# export BEDROCK_RETRY_MAX_DELAY="60.0"
+
+# AWS S3 설정
+# export AWS_S3_BUCKET="your-bucket-name"
+# export AWS_S3_REGION="ap-northeast-1"
+# export AWS_S3_ACCESS_KEY_ID="your-aws-s3-access-key-id"
+# export AWS_S3_SECRET_ACCESS_KEY="your-aws-s3-secret-access-key"
+
+# LLM 설정
+# export LLM_PROVIDER="bedrock"
+# export LLM_EMBEDDINGS_PROVIDER="bedrock"
+# export LLM_CASUAL_MODEL="anthropic.claude-haiku-4-5-20251001-v1:0"
+# export LLM_BUSINESS_MODEL="anthropic.claude-sonnet-4-5-20250929-v1:0"
+# export LLM_CIRCUIT_BREAKER_THRESHOLD="5"
+# export LLM_CIRCUIT_BREAKER_TIMEOUT="60.0"
+
+# Guardrail 설정
+# export GUARDRAIL_LLM_CIRCUIT_BREAKER_THRESHOLD="5"
+# export GUARDRAIL_LLM_CIRCUIT_BREAKER_TIMEOUT="60.0"
+
+# Cache 설정
+# export CACHE_KB_VERSION="v1.0"
+# export SEMANTIC_CACHE_SIMILARITY_THRESHOLD="0.95"
+# export SEMANTIC_CACHE_MAX_SEARCH="50"
+# export SEMANTIC_CACHE_EARLY_EXIT="0.98"
+
+# FAQ 설정
+# export FAQ_PROVIDER="hybrid"
+# export FAQ_EMBEDDING_CACHE_SIZE="1000"
+# export FAQ_EMBEDDING_CACHE_TTL="3600"
+# export FAQ_DEFAULT_COMPANY_ID="default"
+# export FAQ_WARMUP_LIMIT="1000"
+# export FAQ_GENERATION_DAYS_BACK="30"
+# export FAQ_GENERATION_MIN_FREQUENCY="20"
+# export FAQ_GENERATION_MIN_CONFIDENCE="0.85"
+# export FAQ_CLUSTER_SIMILARITY_THRESHOLD="0.8"
+
+# Session 설정
+# export SESSION_TTL="3600"
+
+# Question Log 설정
+# export QUESTION_LOG_TTL="604800"
+
+# LangSmith 설정
+# export LANGSMITH_TRACING_V2="true"
+# export LANGSMITH_API_KEY="your-langsmith-api-key"
+# export LANGSMITH_PROJECT="your-langsmith-project-name"
+
